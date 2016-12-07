@@ -1,0 +1,6 @@
+TRACE: 2016/12/02 09:41:59 mustang_log.go:52: log should be at test.log
+TRACE: 2016/12/02 09:44:27 mustang_log.go:52: log should be at test.log
+TRACE: 2016/12/02 09:59:21 mustang_log.go:58: log should be at test.log
+TRACE: 2016/12/02 10:02:13 mustang_log.go:61: log should be at test.log
+TRACE: 2016/12/02 10:03:36 mustang_log.go:61: log should be at test.log
+TRACE: 2016/12/02 10:03:53 mustang_log.go:61: log should be at test.log
