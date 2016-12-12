@@ -107,9 +107,10 @@ func InitDB(dbname string) {
         schedule_strategy text default 'now',
 		deploy_mode text default 'client',
 		driver_id text,
+		task_status text default 'stopped',
 		app_id text,
 		process_id text,
-		exec_sequence text,
+		exec_seq text,
 		source_file text);`
 
 	muslog.Trace("create table use:" + sqlCreate)

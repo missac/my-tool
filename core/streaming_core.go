@@ -112,14 +112,12 @@ func (s *StreamingMgm) SubmitTask() (string, error) {
 	cmd += " --conf spark.storage.memoryFraction=" + s.StorgeMemoryFraction
 	cmd += " --conf spark.shuffle.memoryFraction=" + s.ShuffleMemoryFraction
 	muslog.Info("spark submit sequence: " + cmd)
-	s.ExecSeq = cmd
 	var execTimes = 0
-	if s.ScheduleMode == ScheduleNow {
-		execTimes = 1
-	}
 	s.TaskID = tool.GenUUID()
 	muslog.Info("add task with taskid: " + s.TaskID)
+	cmd += " --conf spark.task.id=" + s.TaskID
 
+	s.ExecSeq = cmd
 	err := dbmgm.AddTask(s.AppName, s.TaskID, s.TaskType, s.TaskDes, s.CodeType, s.ScheduleMode, execTimes, s.DataSource, cmd, s.FilePath, s.DeployMode, "notset")
 	if err != nil {
 		muslog.Error("add task faild: " + err.Error())

@@ -1,28 +1,28 @@
 package handler
 
 import (
-	"bufio"
 	"core"
 	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"io"
 	"mime/multipart"
 	"muslog"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 )
 
 var m *StreamingHandler
+var streamingOnce sync.Once
 
 type StreamingHandler struct {
 	wsTaskMap map[string]io.ReadCloser
 }
 
 func NewStreamingHandler() *StreamingHandler {
-	once.Do(func() {
+	streamingOnce.Do(func() {
 		wtm := make(map[string]io.ReadCloser, 0)
 		m = &StreamingHandler{wtm}
 	})
@@ -34,46 +34,8 @@ func (sh *StreamingHandler) TestFunc(ctx *gin.Context) {
 	//	go mgm.StartJob()
 	//	ctx.Status(http.StatusOK)
 	muslog.Info("handler request for test")
-	sh.wsHandler(ctx.Writer, ctx.Request, false, "aaaa")
-}
-
-var wsupgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
-func (sh *StreamingHandler) wsHandler(w http.ResponseWriter, r *http.Request, stopOnClose bool, taskId string) {
-	conn, err := wsupgrader.Upgrade(w, r, nil)
-	if err != nil {
-		return
-	}
-	defer conn.Close()
-	var ri io.ReadCloser
-	var pid int
-	if _, ok := sh.wsTaskMap[taskId]; ok {
-		ri, _ = sh.wsTaskMap[taskId]
-		println("job already exist")
-	} else {
-		mgm := core.NewStreamingMgm()
-		ri, pid, _ = mgm.StartJob()
-		sh.wsTaskMap[taskId] = ri
-	}
-
-	sr := bufio.NewScanner(ri)
-	for sr.Scan() {
-		println(string(sr.Bytes()))
-		err = conn.WriteMessage(websocket.TextMessage, sr.Bytes())
-		if err != nil {
-			println("client close websocket")
-			conn.Close()
-			break
-		}
-	}
-	if stopOnClose {
-		//kill the runing task
-		println(pid)
-		//clear wstaskmap
-	}
+	//	m := NewTaskHandler()
+	//	m.wsHandler(ctx.Writer, ctx.Request, false, "aaaa")
 }
 
 func (sh *StreamingHandler) GetTemplate(ctx *gin.Context) {

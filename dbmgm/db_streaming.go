@@ -2,6 +2,8 @@ package dbmgm
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"muslog"
 	"time"
@@ -27,6 +29,7 @@ type streamingTask struct {
 	Schedule_strategy string `json:"schedule_strategy"`
 	Deploy_mode       string `json:"deploy_mode"`
 	Driver_id         string `json:"driver_id"`
+	Task_status       string `json:"task_status"`
 	App_id            string `json:"app_id"`
 	Process_id        string `json:"p_id"`
 	Exec_sequence     string `json:"exec_sequence"`
@@ -86,7 +89,7 @@ func ListStreamingTask() (string, error) {
 	for rows.Next() {
 		var task streamingTask
 
-		err = rows.Scan(&task.Id, &task.Task_id, &task.Task_type, &task.Task_name, &task.Task_des, &task.Language, &task.Data_source, &task.Submit_time, &task.Last_exec_time, &task.Exec_times, &task.Last_modify_time, &task.Modify_times, &task.Schedule_strategy, &task.Deploy_mode, &task.Driver_id, &task.App_id, &task.Process_id, &task.Exec_sequence, &task.Source_file)
+		err = rows.Scan(&task.Id, &task.Task_id, &task.Task_type, &task.Task_name, &task.Task_des, &task.Language, &task.Data_source, &task.Submit_time, &task.Last_exec_time, &task.Exec_times, &task.Last_modify_time, &task.Modify_times, &task.Schedule_strategy, &task.Deploy_mode, &task.Task_status, &task.Driver_id, &task.App_id, &task.Process_id, &task.Exec_sequence, &task.Source_file)
 		if err != nil {
 			muslog.Error(err)
 			return "", err
@@ -102,7 +105,7 @@ func ListStreamingTask() (string, error) {
 	return string(res), nil
 }
 
-func UpdateProcessId(taskId string, pid string) error {
+func UpdatePid(taskId string, pid string) error {
 	db := createCon(dbName)
 	defer db.Close()
 	stmt, err := db.Prepare("update task_streaming set process_id = ? where task_id = ?;")
@@ -171,6 +174,65 @@ func UpdateExecTimes(taskId string) error {
 		return err
 	}
 	return nil
+}
+
+func UpdateStatus(taskId string, status string) error {
+	db := createCon(dbName)
+	defer db.Close()
+
+	stmt, err := db.Prepare("update task_streaming set task_status = ? where task_id = ?;")
+	defer stmt.Close()
+	if err != nil {
+		muslog.Error(err)
+		return err
+	}
+	_, err = stmt.Exec(status, taskId)
+	if err != nil {
+		muslog.Error(err)
+		return err
+	}
+	return nil
+}
+
+func GetExecSeq(taskId string) (string, error) {
+	db := createCon(dbName)
+	defer db.Close()
+
+	stmt, err := db.Prepare("select exec_seq from task_streaming where task_id = ?;")
+	if err != nil {
+		muslog.Error(err)
+		return "", err
+	}
+	var res string
+	err = stmt.QueryRow(taskId).Scan(&res)
+	if err != nil {
+		muslog.Error(err)
+		return "", err
+	}
+	if res == "" {
+		msg := fmt.Sprintf("exec_seq is empty for id: %s", taskId)
+		muslog.Error(msg)
+		return "", errors.New(msg)
+	}
+	return res, nil
+}
+
+func GetPid(taskId string) (int, error) {
+	db := createCon(dbName)
+	defer db.Close()
+
+	stmt, err := db.Prepare("select process_id from task_streaming where task_id = ?;")
+	if err != nil {
+		muslog.Error(err)
+		return 0, err
+	}
+	var res int
+	err = stmt.QueryRow(taskId).Scan(&res)
+	if err != nil {
+		muslog.Error(err)
+		return 0, err
+	}
+	return res, nil
 }
 
 func UpdateStreamingTask(taskId string, name string, taskDes string, schStrategy string, execSeq string, appId string) error {

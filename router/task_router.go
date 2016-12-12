@@ -22,4 +22,7 @@ func (t *TaskRouter) registerRouter(r *gin.Engine) {
 	group.GET("/list", handler.NewTaskHandler().List)
 	group.DELETE("/:taskid", handler.NewTaskHandler().Delete)
 	group.POST("/update/:taskid", handler.NewTaskHandler().Update)
+	group.POST("/start/:taskid", handler.NewTaskHandler().Start)
+	group.GET("/ws/:taskid", handler.NewTaskHandler().WSocket)
+	group.POST("/stop/:taskid", handler.NewTaskHandler().Stop)
 }
